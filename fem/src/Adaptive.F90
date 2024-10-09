@@ -125,6 +125,11 @@ CONTAINS
     LOGICAL :: NoInterp, Parallel, AdaptiveOutput, AdaptInit
     TYPE(ValueList_t), POINTER :: Params
     CHARACTER(*), PARAMETER :: Caller = 'RefineMesh'
+    REAL(KIND=dp), POINTER :: Wrk(:,:)
+    REAL(KIND=dp) :: CoordScale(3)
+    INTEGER :: mesh_dim
+
+
 
     
     SAVE DoFinalRef
@@ -1304,6 +1309,26 @@ CONTAINS
     CHARACTER(:), ALLOCATABLE :: MeshCommand, Name, MeshInputFile
 !------------------------------------------------------------------------------
     
+    ! Before writing the background mesh, find the coordinates scaling and then write the background mesh in the scaled coordinates
+         ! Scaling of coordinates
+     !-----------------------------------------------------------------------------
+    ! Determine the mesh dimension 
+     !----------------------------------------------------------------------------
+    CALL SetMeshDimension( RefMesh )
+     
+    mesh_dim = RefMesh % MaxDim
+
+    Wrk => ListGetConstRealArray( Model % Simulation,'Coordinate Scaling',Found )
+    CoordScale = 1.0_dp    
+    IF( Found ) THEN            
+      DO i=1, mesh_dim
+        j = MIN( i, SIZE(Wrk,1) )
+        CoordScale(i) = Wrk(j,1)
+      END DO
+      WRITE(Message,'(A,3ES10.3)') 'Scaling the background mesh coordinates:',CoordScale(1:3)
+      CALL Info(Caller ,Message, Level=10)
+    END IF 
+
     OPEN( 11, STATUS='UNKNOWN', FILE='bgmesh' )
 
     WRITE( 11,* ) COUNT( NodalError > 100*AEPS )
@@ -1330,15 +1355,22 @@ CONTAINS
           IF ( CoordinateSystemDimension() == 2 ) THEN
              WRITE(11,'(3e23.15)') RefMesh % Nodes % x(i), &
                   RefMesh % Nodes % y(i), Lambda
+              ! Write a list based background mesh for gmsh. S for scalar and P for point.
+              ! the mesh size is scaled by the minimum of the scaling factors. This may need to be changed to include all cases.
+              WRITE( 12,* ) 'SP(', (RefMesh % Nodes % x(i)) / CoordScale(1), &
+                  ', ', (RefMesh % Nodes % y(i)) / CoordScale(2), ') {', &
+                  Lambda / MIN(CoordScale(1), CoordScale(2)), '};'
           ELSE
              WRITE(11,'(4e23.15)') RefMesh % Nodes % x(i), &
                   RefMesh % Nodes % y(i), &
                   RefMesh % Nodes % z(i), Lambda
               HValueF(i) = Lambda
-              ! SP(4.01522, 19.81739, -35.33044){0.74945538266441};
-              WRITE( 12,* ) 'SP(', RefMesh % Nodes % x(i), ', ', &
-                  RefMesh % Nodes % y(i), ', ', RefMesh % Nodes % z(i), ')', &
-                  '{', Lambda, '};'
+              ! Write a list based background mesh for gmsh. S for scalar and P for point. 
+              ! the mesh size is scaled by the minimum of the scaling factors. This may need to be changed to include all cases.
+              WRITE( 12,* ) 'SP(', (RefMesh % Nodes % x(i)) / CoordScale(1), &
+                  ', ', (RefMesh % Nodes % y(i)) / CoordScale(2), &
+                  ', ', (RefMesh % Nodes % z(i)) / CoordScale(3), ') {', &
+                  Lambda / MIN(CoordScale(1), MIN(CoordScale(2), CoordScale(3))), '};'
           END IF
        ELSE
           IF ( CoordinateSystemDimension() == 2 ) THEN
