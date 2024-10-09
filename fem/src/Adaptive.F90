@@ -1305,7 +1305,12 @@ CONTAINS
 !------------------------------------------------------------------------------
     
     OPEN( 11, STATUS='UNKNOWN', FILE='bgmesh' )
+
     WRITE( 11,* ) COUNT( NodalError > 100*AEPS )
+    ! write the bacground mesh for gmsh too. Need to make it to write it if requested
+    ! View "mesh size field" {
+    OPEN( 12, STATUS='UNKNOWN', FILE='gmsh_bgmesh.pos' )
+    WRITE( 12,* ) 'View "mesh size field" {'
 
     DO i=1,RefMesh % NumberOfNodes
        IF ( NodalError(i) > 100*AEPS ) THEN
@@ -1330,6 +1335,10 @@ CONTAINS
                   RefMesh % Nodes % y(i), &
                   RefMesh % Nodes % z(i), Lambda
               HValueF(i) = Lambda
+              ! SP(4.01522, 19.81739, -35.33044){0.74945538266441};
+              WRITE( 12,* ) 'SP(', RefMesh % Nodes % x(i), ', ', &
+                  RefMesh % Nodes % y(i), ', ', RefMesh % Nodes % z(i), ')', &
+                  '{', Lambda, '};'
           END IF
        ELSE
           IF ( CoordinateSystemDimension() == 2 ) THEN
@@ -1342,6 +1351,10 @@ CONTAINS
           END IF
        END IF
     END DO
+    ! write };
+    WRITE( 12,* ) '};'
+    CLOSE( 11 )
+    CLOSE( 12 )
     
     Path = ListGetString( Params, 'Adaptive Mesh Name', Found )
     IF ( .NOT. Found ) Path = 'RefinedMesh'
