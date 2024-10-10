@@ -1314,7 +1314,7 @@ FUNCTION Gmsh_ReMesh( RefMesh, ErrorLimit, HValue, NodalError, &
 
   ! write the bacground mesh for gmsh too. Need to make it to write it if requested
   ! View "mesh size field" {
-  OPEN( 1, STATUS='UNKNOWN', FILE='gmsh_bgmesh.pos' )
+  OPEN( 11, STATUS='UNKNOWN', FILE='gmsh_bgmesh.pos' )
   WRITE( 11,* ) 'View "mesh size field" {'
 
   DO i=1,RefMesh % NumberOfNodes
@@ -1399,10 +1399,13 @@ FUNCTION Gmsh_ReMesh( RefMesh, ErrorLimit, HValue, NodalError, &
   MeshCommand = ListGetString( Params, 'Mesh Command', Found )
   MeshConversionCommand = ListGetString( Params, 'Mesh Conversion Command', Found )
   CALL Info(Caller, 'Gmsh command: '//TRIM(MeshCommand),Level=10)
-  CALL Info(Caller, 'ElmerGrid command: '//TRIM(MeshConversionCommand),Level=10)
   CALL SystemCommand( MeshCommand )
   CALL Info(Caller, 'Conversion of mesh using Gmsh done. Starting ElmerGrid', Level=5)
+  ! the conversion command need to get the path from Path
+  MeshConversionCommand = MeshConversionCommand // ' -out ' // TRIM(Path)
+  CALL Info(Caller, 'ElmerGrid command: '//TRIM(MeshConversionCommand),Level=10)
   CALL SystemCommand( MeshConversionCommand )
+
   CALL Info(Caller, 'Conversion of mesh ElmerGrid done.', Level=5)
 
   ! print the output path 
