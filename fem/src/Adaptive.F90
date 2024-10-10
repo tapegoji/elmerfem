@@ -1348,12 +1348,14 @@ FUNCTION Gmsh_ReMesh( RefMesh, ErrorLimit, HValue, NodalError, &
       END IF
     ELSE
       IF ( CoordinateSystemDimension() == 2 ) THEN
-          WRITE(11,'(3e23.15)') RefMesh % Nodes % x(i), &
-                                RefMesh % Nodes % y(i), HValue(i)
+          WRITE(11, *) 'SP(', (RefMesh % Nodes % x(i)) / CoordScale(1), &
+              ', ', (RefMesh % Nodes % y(i)) / CoordScale(2), ') {', &
+              HValue(i) / MIN(CoordScale(1), CoordScale(2)), '};'
       ELSE
-          WRITE(11,'(4e23.15)') RefMesh % Nodes % x(i), &
-                                RefMesh % Nodes % y(i), &
-                                RefMesh % Nodes % z(i), HValue(i)
+          WRITE(11, *) 'SP(', (RefMesh % Nodes % x(i)) / CoordScale(1), &
+              ', ', (RefMesh % Nodes % y(i)) / CoordScale(2), &
+              ', ', (RefMesh % Nodes % z(i)) / CoordScale(3), ') {', &
+              HValue(i) / MIN(CoordScale(1), MIN(CoordScale(2), CoordScale(3))), '};'
       END IF
     END IF
   END DO
@@ -1377,9 +1379,8 @@ FUNCTION Gmsh_ReMesh( RefMesh, ErrorLimit, HValue, NodalError, &
     Path = TRIM(Path)
   END IF
   CALL Info(Caller,'Writing the background mesh to: '//TRIM(Path),Level=10)
-  ! When using gmsh+elmergrid, the two lines below are not needed. elmergrid will take care of the creation of the folder and mesh file.
-  ! CALL MakeDirectory( TRIM(Path) // CHAR(0) )
-  ! CALL WriteMeshToDisk( RefMesh, Path )
+  CALL MakeDirectory( TRIM(Path) // CHAR(0) )
+  CALL WriteMeshToDisk( RefMesh, Path )
 
   Mesh => RefMesh
   DO WHILE( ASSOCIATED( Mesh ) )
