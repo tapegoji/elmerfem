@@ -958,27 +958,27 @@ void STDCALLBULL FC_FUNC(solvehypreams,SOLVEHYPREAMS)
    HYPRE_IJMatrixCreate(comm, ilower, iupper, nlower, nupper, &G);
    HYPRE_IJMatrixSetObjectType(G, HYPRE_PARCSR);
    HYPRE_IJMatrixInitialize(G);
-   {
-      int nnz,irow,i,j,k,*rcols,csize=32;
+  //  {
+  //     int nnz,irow,i,j,k,*rcols,csize=32;
 
-      rcols = (int *)malloc( csize*sizeof(int) );
-      for (i = 0; i < local_size; i++)
-      {
-         if( !owner[i] ) continue;
-         nnz = grows[i+1] - grows[i];
-         if ( nnz>csize ) {
-           rcols = (int *)realloc( rcols, nnz*sizeof(int) );
-           csize = nnz;
-         }
-         irow = globaldofs[i];
-         for( k=0,j=grows[i]; j<grows[i+1]; j++,k++)
-         {
-           rcols[k] = globalnodes[gcols[j-1]-1];
-         }
-         HYPRE_IJMatrixAddToValues(G, 1, &nnz, &irow, rcols, &gvals[grows[i]-1]);
-      }
-      free( rcols );
-   }
+  //     rcols = (int *)malloc( csize*sizeof(int) );
+  //     for (i = 0; i < local_size; i++)
+  //     {
+  //        if( !owner[i] ) continue;
+  //        nnz = grows[i+1] - grows[i];
+  //        if ( nnz>csize ) {
+  //          rcols = (int *)realloc( rcols, nnz*sizeof(int) );
+  //          csize = nnz;
+  //        }
+  //        irow = globaldofs[i];
+  //        for( k=0,j=grows[i]; j<grows[i+1]; j++,k++)
+  //        {
+  //          rcols[k] = globalnodes[gcols[j-1]-1];
+  //        }
+  //        HYPRE_IJMatrixAddToValues(G, 1, &nnz, &irow, rcols, &gvals[grows[i]-1]);
+  //     }
+  //     free( rcols );
+  //  }
 
    HYPRE_IJMatrixAssemble(G);
    HYPRE_IJMatrixGetObject(G, (void**) &parcsr_G);
